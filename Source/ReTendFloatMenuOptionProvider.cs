@@ -36,41 +36,36 @@ public class ReTendFloatMenuOptionProvider : FloatMenuOptionProvider
 
 		// 1. Check if the acting pawn can perform doctor work.
 		if (doctor.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
-		{
 			yield break; // Exit without providing an option.
-		}
 
 		// 2. Check if the target pawn actually needs tending and if re-tending is available.
 		bool needsTending = HealthAIUtility.ShouldBeTendedNowByPlayer(patient) || patient.Downed;
 		if (!needsTending || !ReTendFunctions.ReTendAvailable(patient))
-		{
 			yield break; // Exit without providing an option.
-		}
 
 		// 3. Handle self-tending restrictions.
 		if (doctor == patient && (doctor.playerSettings == null || !doctor.playerSettings.selfTend))
 		{
 			yield return new FloatMenuOption("Cannot ReTend" + ": " + "SelfTendDisabled".Translate().CapitalizeFirst(), null);
-			yield break; // Provide a disabled option and stop.
+			yield break;
 		}
 
 		// 4. Check if the target is in a hostile mental state.
 		if (patient.InAggroMentalState && !patient.health.hediffSet.HasHediff(HediffDefOf.Scaria))
 		{
 			yield return new FloatMenuOption("Cannot ReTend" + ": " + "PawnIsInMentalState".Translate(patient).CapitalizeFirst(), null);
-			yield break; // Provide a disabled option and stop.
+			yield break;
 		}
 
 		// 5. Check for a valid path.
 		if (!doctor.CanReach(patient, PathEndMode.ClosestTouch, Danger.Deadly))
 		{
 			yield return new FloatMenuOption("Cannot ReTend" + ": " + "NoPath".Translate().CapitalizeFirst(), null);
-			yield break; // Provide a disabled option and stop.
+			yield break;
 		}
 
 		// --- Option Creation ---
 		// If all checks pass, create the clickable "ReTend" option.
-
 		Thing medicine = ReTendFunctions.FindBestMedicineToReTend(doctor, patient);
 
 		void Action()
@@ -108,7 +103,7 @@ public class ReTendFloatMenuOptionProvider : FloatMenuOptionProvider
 			action: Action,
 			priority: MenuOptionPriority.Default,
 			mouseoverGuiAction: null,
-			revalidateClickTarget: patient // This is the correct parameter.
+			revalidateClickTarget: patient
 		);
 	}
 }
