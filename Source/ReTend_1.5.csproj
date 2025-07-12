@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<AssemblyName>ReTend</AssemblyName>
+		<TargetFramework>net472</TargetFramework>
+		<Configurations>Debug;Release</Configurations>
+		<LangVersion>latest</LangVersion>
+		<ImplicitUsings>enable</ImplicitUsings>
+
+		<DefineConstants>V1_5</DefineConstants>
+		<OutputPath>..\1.5\Assemblies\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Krafs.Rimworld.Ref" Version="1.5.*" />
+		<PackageReference Include="Lib.Harmony" Version="2.3.6" ExcludeAssets="runtime" />
+	</ItemGroup>
+</Project>
