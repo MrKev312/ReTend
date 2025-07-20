@@ -38,9 +38,8 @@ public class ReTendFloatMenuOptionProvider : FloatMenuOptionProvider
 		if (doctor.WorkTypeIsDisabled(WorkTypeDefOf.Doctor))
 			yield break; // Exit without providing an option.
 
-		// 2. Check if the target pawn actually needs tending and if re-tending is available.
-		bool needsTending = HealthAIUtility.ShouldBeTendedNowByPlayer(patient) || patient.Downed;
-		if (!needsTending || !ReTendFunctions.ReTendAvailable(patient))
+		// 2. Check if re-tending is available.
+		if (!ReTendFunctions.ReTendAvailable(patient))
 			yield break; // Exit without providing an option.
 
 		// 3. Handle self-tending restrictions.
