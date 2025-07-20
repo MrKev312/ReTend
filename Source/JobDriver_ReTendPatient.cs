@@ -28,7 +28,7 @@ public class JobDriver_ReTendPatient : JobDriver_TendPatient
 		return true;
 	}
 
-#if V1_2 || V1_3 || V1_4 || V1_5
+#if V1_2 || V1_3 || V1_4 || V1_5 || V1_6
 	protected override IEnumerable<Toil> MakeNewToils()
 #else
 	public override IEnumerable<Toil> MakeNewToils()

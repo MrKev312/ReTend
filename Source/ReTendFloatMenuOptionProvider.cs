@@ -10,9 +10,9 @@ public class ReTendFloatMenuOptionProvider : FloatMenuOptionProvider
 {
 	// These properties determine when this provider is active.
 	// "ReTend" should be available for both drafted and undrafted pawns.
-	public override bool Drafted => true;
-	public override bool Undrafted => true;
-	public override bool Multiselect => false;
+	protected override bool Drafted => true;
+    protected override bool Undrafted => true;
+    protected override bool Multiselect => false;
 
 	/// <summary>
 	/// This method is called for each pawn under the cursor to see what float menu options are available.
