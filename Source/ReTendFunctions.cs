@@ -169,21 +169,42 @@ public static class ReTendFunctions
 			List<Hediff> hediffs = patient.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{
-				if (hediffs[i].IsTended() && ((ReTendSettings.diseases && hediffs[i].def.PossibleToDevelopImmunityNaturally()) || hediffs[i] is Hediff_Injury) && !hediffs[i].IsPermanent())
-				{
-					HediffComp_TendDuration tendDuration = hediffs[i].TryGetComp<HediffComp_TendDuration>();
-					if (tendDuration != null)
-					{
-						if (hediffs[i] is Hediff_Injury)
-						{
-							if (tendDuration.tendQuality < ReTendSettings.minquality)
-								tmpHediffs.Add(hediffs[i]);
-						}
-						else if (tendDuration.tendQuality < ReTendSettings.diseasequality)
-							tmpHediffs.Add(hediffs[i]);
-					}
-				}
-			}
+                Hediff currHediff = hediffs[i];
+
+                // 1) must already have been tended
+                if (!currHediff.IsTended())
+                    continue;
+
+                // 2) must be either an injury, or a disease and disease‑re‑tending is enabled
+                bool isDisease = ReTendSettings.diseases
+                                 && currHediff.def.PossibleToDevelopImmunityNaturally();
+                if (currHediff is not Hediff_Injury && !isDisease)
+                    continue;
+
+                // 3) must not be permanent (e.g. scars)
+                if (currHediff.IsPermanent())
+                    continue;
+
+                // 4) must have a TendDuration component
+                HediffComp_TendDuration tendComp = currHediff.TryGetComp<HediffComp_TendDuration>();
+                if (tendComp == null)
+                    continue;
+
+                // 5) must still be below the relevant quality threshold
+                if (currHediff is Hediff_Injury)
+                {
+                    if (tendComp.tendQuality >= ReTendSettings.minquality)
+                        continue;
+                }
+                else // disease case
+                {
+                    if (tendComp.tendQuality >= ReTendSettings.diseasequality)
+                        continue;
+                }
+
+                // BY NOW currHediff MUST BE: tended, a disease or injury, not permanent, has duration component, below quality limits
+                tmpHediffs.Add(currHediff);
+            }
 
 			tmpHediffs = ReTendSettings.sortmethod
 				? [.. tmpHediffs.OrderBy(h => h.Severity).Reverse()]
