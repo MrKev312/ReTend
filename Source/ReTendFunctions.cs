@@ -169,82 +169,82 @@ public static class ReTendFunctions
 			List<Hediff> hediffs = patient.health.hediffSet.hediffs;
 			for (int i = 0; i < hediffs.Count; i++)
 			{
-                Hediff currHediff = hediffs[i];
+				Hediff currHediff = hediffs[i];
 
-                // 1) must already have been tended
-                if (!currHediff.IsTended())
-                    continue;
+				// 1) must already have been tended
+				if (!currHediff.IsTended())
+					continue;
 
-                // 2) must be either an injury, or a disease and disease‑re‑tending is enabled
-                bool isDisease = ReTendSettings.diseases
-                                 && currHediff.def.PossibleToDevelopImmunityNaturally();
-                if (currHediff is not Hediff_Injury && !isDisease)
-                    continue;
+				// 2) must be either an injury, or a disease and disease‑re‑tending is enabled
+				bool isDisease = ReTendSettings.diseases
+								&& currHediff.def.PossibleToDevelopImmunityNaturally();
+				if (currHediff is not Hediff_Injury && !isDisease)
+					continue;
 
-                // 3) must not be permanent (e.g. scars)
-                if (currHediff.IsPermanent())
-                    continue;
+				// 3) must not be permanent (e.g. scars)
+				if (currHediff.IsPermanent())
+					continue;
 
-                // 4) must have a TendDuration component
-                HediffComp_TendDuration tendComp = currHediff.TryGetComp<HediffComp_TendDuration>();
-                if (tendComp == null)
-                    continue;
+				// 4) must have a TendDuration component
+				HediffComp_TendDuration tendComp = currHediff.TryGetComp<HediffComp_TendDuration>();
+				if (tendComp == null)
+					continue;
 
-                // 5) must still be below the relevant quality threshold
-                if (currHediff is Hediff_Injury)
-                {
-                    if (tendComp.tendQuality >= ReTendSettings.minquality)
-                        continue;
-                }
-                else // disease case
-                {
-                    if (tendComp.tendQuality >= ReTendSettings.diseasequality)
-                        continue;
-                }
+				// 5) must still be below the relevant quality threshold
+				if (currHediff is Hediff_Injury)
+				{
+					if (tendComp.tendQuality >= ReTendSettings.minquality)
+						continue;
+				}
+				else // disease case
+				{
+					if (tendComp.tendQuality >= ReTendSettings.diseasequality)
+						continue;
+				}
 
-                // BY NOW currHediff MUST BE: tended, a disease or injury, not permanent, has duration component, below quality limits
-                tmpHediffs.Add(currHediff);
-            }
+				// BY NOW currHediff MUST BE: tended, a disease or injury, not permanent, has duration component, below quality limits
+				tmpHediffs.Add(currHediff);
+			}
 
 			tmpHediffs = ReTendSettings.sortmethod
 				? [.. tmpHediffs.OrderBy(h => h.Severity).Reverse()]
 				: [.. tmpHediffs.OrderBy(h => h.TryGetComp<HediffComp_TendDuration>().tendQuality)];
 		}
 
-		if (!tmpHediffs.Any())
-		{
-			return;
-		}
+		// if we somehow got here but found no hediffs that need retending, we should quit now.
+		if (!tmpHediffs.Any()) return;
 
-		Hediff hediff = tmpHediffs[0];
-		outHediffsToTend.Add(hediff);
-		HediffCompProperties_TendDuration hediffCompProperties_TendDuration = hediff.def.CompProps<HediffCompProperties_TendDuration>();
-		if (hediffCompProperties_TendDuration != null && hediffCompProperties_TendDuration.tendAllAtOnce)
+		Hediff bestTendHediff = tmpHediffs[0];
+		outHediffsToTend.Add(bestTendHediff);
+
+		// remove selected 'best' hediff from temp list so we don't have to worry about duplicating it later
+		tmpHediffs.Remove(bestTendHediff);
+
+		// HediffComp_TendDuration must exist (checked earlier), but I'm not sure how that relates to HediffCompProperties_TendDuration. so we still check THAT
+		HediffCompProperties_TendDuration hediffCompProperties_TendDuration = bestTendHediff.def.CompProps<HediffCompProperties_TendDuration>();
+		bool TendDurationExists = hediffCompProperties_TendDuration != null;
+		if (TendDurationExists && hediffCompProperties_TendDuration.tendAllAtOnce) // tendAllAtOnce ~= burns/acid/'group wounds'
 		{
-			for (int j = 0; j < tmpHediffs.Count; j++)
+			for (int j = 0; j < tmpHediffs.Count; j++) // iterate through all other hediffs
 			{
-				if (tmpHediffs[j] != hediff && tmpHediffs[j].def == hediff.def)
+				if (tmpHediffs[j].def == bestTendHediff.def) // if any tmpHediff has the same def as hediff (different wounds, same cause?)
 				{
 					outHediffsToTend.Add(tmpHediffs[j]);
 				}
 			}
 		}
-		else if (hediff is Hediff_Injury && usingMedicine)
+		// if we are using medicine, we do cumulative tend
+		else if (usingMedicine)
 		{
-			float num = hediff.Severity;
+			float totalSeverity = bestTendHediff.Severity;
 			for (int k = 0; k < tmpHediffs.Count; k++)
 			{
-				if (tmpHediffs[k] == hediff)
-					continue;
-
-				if (tmpHediffs[k] is Hediff_Injury hediff_Injury)
+				Hediff possibleAdditionalTend = tmpHediffs[k];
+				float severity = possibleAdditionalTend.Severity;
+				if (totalSeverity + severity <= 20f)
 				{
-					float severity = hediff_Injury.Severity;
-					if (num + severity <= 20f)
-					{
-						num += severity;
-						outHediffsToTend.Add(hediff_Injury);
-					}
+					totalSeverity += severity;
+					outHediffsToTend.Add(possibleAdditionalTend);
 				}
 			}
 		}
