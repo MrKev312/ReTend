@@ -31,7 +31,7 @@ public class JobDriver_ReTendPatient : JobDriver_TendPatient
 #if V1_2 || V1_3 || V1_4 || V1_5
 	protected override IEnumerable<Toil> MakeNewToils()
 #else
-	public override IEnumerable<Toil> MakeNewToils()
+    protected override IEnumerable<Toil> MakeNewToils()
 #endif
 	{
 		this.FailOnDespawnedNullOrForbidden(TargetIndex.A);
